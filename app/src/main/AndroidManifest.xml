@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    package="com.emilock.app"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.emilock.app">
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- PERMISSIONS -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- Core -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- Location -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!-- Phone / SIM -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" /> <!-- Notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Foreground Services -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" /> <!-- Battery & Wakelock -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Overlay / System UI -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" /> <!-- Settings (for Device Owner capabilities) -->
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
+        android:name=".EmiLockApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,41 +39,84 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EMIManager"
         tools:targetApi="31">
-
-        <!-- DEVICE ADMIN / DEVICE OWNER RECEIVER -->
-        <receiver
-            android:name=".MyDeviceAdminReceiver"
-            android:permission="android.permission.BIND_DEVICE_ADMIN"
-            android:exported="true">
-
-            <meta-data
-                android:name="android.app.device_admin"
-                android:resource="@xml/device_admin"/>
-
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
-            </intent-filter>
-        </receiver>
-
-        <!-- BOOT RECEIVER -->
-        <receiver
-            android:name=".BootReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
-
+        <activity
+            android:name=".ui.PermissionSetupActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.EnrollmentActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.LockScreenActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.EMIManager.LockScreen" /> <!-- ─── ACTIVITIES ───────────────────────────────────────── -->
+        <!-- Main / Launcher (shows enrollment or status) -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+                <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- ─── RECEIVERS ─────────────────────────────────────────── -->
+        <!-- Device Owner / Admin Receiver -->
+        <receiver
+            android:name=".MyDeviceAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
+                <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
+            </intent-filter>
+        </receiver> <!-- Boot Receiver -->
+        <receiver
+            android:name=".receivers.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver> <!-- ─── SERVICES ──────────────────────────────────────────── -->
+        <!-- Background Monitoring Service (location + heartbeat + status check) -->
+        <service
+            android:name=".service.MonitoringService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" /> <!-- Firebase Cloud Messaging Service -->
+        <service
+            android:name=".service.EmiLockMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service> <!-- Accessibility Service (anti-tamper) -->
+        <service
+            android:name=".service.EmiLockAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
     </application>
 
 </manifest>

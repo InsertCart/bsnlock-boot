@@ -4,5 +4,10 @@
         <force-lock/>
         <wipe-data/>
         <limit-password/>
+        <watch-login/>
+        <reset-password/>
+        <expire-password/>
+        <encrypted-storage/>
+        <disable-camera/>
     </uses-policies>
 </device-admin>

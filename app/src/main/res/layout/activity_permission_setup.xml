@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Setup Required"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Grant these permissions to activate EMI protection:"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:id="@+id/tvPermissionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:textSize="14sp"
+        android:fontFamily="monospace"
+        android:textColor="#333333" />
+
+    <Button
+        android:id="@+id/btnGrantPermissions"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="GRANT ALL PERMISSIONS"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="CONTINUE TO ENROLLMENT"
+        android:enabled="false" />
+
+</LinearLayout>

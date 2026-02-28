@@ -2,104 +2,84 @@ package com.emilock.app
 
 import android.app.admin.DevicePolicyManager
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.io.IOException
+import com.emilock.app.data.local.PreferencesManager
+import com.emilock.app.service.MonitoringService
+import com.emilock.app.ui.EnrollmentActivity
+import com.emilock.app.ui.LockScreenActivity
+import com.emilock.app.ui.PermissionSetupActivity
 
+/**
+ * MainActivity — entry point and routing hub.
+ *
+ * Decision tree on every launch:
+ *  1. Not Device Owner → show warning (device must be provisioned first)
+ *  2. Device Owner but not enrolled → go to PermissionSetupActivity → EnrollmentActivity
+ *  3. Enrolled + locked → show LockScreenActivity
+ *  4. Enrolled + unlocked → start MonitoringService silently and finish
+ */
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var dpm: DevicePolicyManager
-    private lateinit var lockManager: DeviceLockManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        val dpm   = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        val prefs = PreferencesManager(this)
 
+        // Step 1 — Must be Device Owner for full functionality
         if (!dpm.isDeviceOwnerApp(packageName)) {
-            finish()
+            Log.w("EmiLock", "NOT Device Owner. Device must be provisioned via ADB.")
+            // Still allow enrollment flow if user opened app manually
+            routeToEnrollmentOrLock(prefs)
             return
         }
 
-        lockManager = DeviceLockManager(this)
+        // Apply Device Owner hardening on every launch (idempotent)
+        DeviceLockManager(this).applyDeviceOwnerRestrictions()
 
-        checkEmiStatus()
+        routeToEnrollmentOrLock(prefs)
     }
 
-    private fun checkEmiStatus() {
-        Log.d("EMI", "Calling EMI status API...")
-
-        val client = OkHttpClient()
-
-        val body = """
-            { "device_id": "TEST123" }
-        """.trimIndent().toRequestBody("application/json".toMediaType())
-
-        val request = Request.Builder()
-            .url("https://xsx.insertcart.com/emi/status")
-            .post(body)
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("EMI", "API failed: ${e.message}")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful || response.body == null) return
-
-                val responseBody = response.body!!.string()
-                Log.d("EMI", "API response: $responseBody")
-
-                val json = JSONObject(responseBody)
-
-                val emiStatus = json.optString("emi_status")
-                val lockType = json.optString("lock_type")
-
-                val blockedApps = mutableListOf<String>()
-                val appsArray = json.optJSONArray("blocked_apps")
-                if (appsArray != null) {
-                    for (i in 0 until appsArray.length()) {
-                        blockedApps.add(appsArray.getString(i))
-                    }
-                }
-
-                runOnUiThread {
-                    applyLockPolicy(emiStatus, lockType, blockedApps)
-                }
-            }
-        })
-    }
-
-    private fun applyLockPolicy(
-        emiStatus: String,
-        lockType: String,
-        blockedApps: List<String>
-    ) {
-        Log.d("EMI", "Applying policy: $emiStatus / $lockType / $blockedApps")
-
+    private fun routeToEnrollmentOrLock(prefs: PreferencesManager) {
         when {
-            emiStatus == "PAID" -> {
-                lockManager.unlockAll()
+            // Not enrolled → permissions → enrollment
+            !prefs.isEnrolled -> {
+                val dest = if (!prefs.permissionsGranted) {
+                    Intent(this, PermissionSetupActivity::class.java)
+                } else {
+                    Intent(this, EnrollmentActivity::class.java)
+                }
+                startActivity(dest)
+                finish()
             }
 
-            lockType == "FULL" -> {
-                lockManager.fullLock()
+            // Enrolled + locked → lock screen
+            prefs.isLocked -> {
+                startActivity(Intent(this, LockScreenActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
+                finish()
             }
 
-            lockType == "PARTIAL" -> {
-                lockManager.lockPartial(blockedApps)
-            }
+            // Enrolled + unlocked → start monitoring silently
             else -> {
-                lockManager.unlockAll()
+                startMonitoringService()
+                finish()
             }
+        }
+    }
+
+    private fun startMonitoringService() {
+        val intent = Intent(this, MonitoringService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
         }
     }
 }

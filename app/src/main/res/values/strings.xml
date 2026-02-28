@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">EMI Manager</string>
+    <string name="app_name">BSNLock Boot</string>
+    <string name="accessibility_service_description">EmiLock uses Accessibility to protect this device from unauthorized tampering with app settings, factory reset, or uninstallation while the device is under EMI protection.</string>
 </resources>

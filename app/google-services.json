@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "335923294861",
+    "project_id": "bsnlock",
+    "storage_bucket": "bsnlock.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335923294861:android:854797804d8eae542e28c4",
+        "android_client_info": {
+          "package_name": "com.emilock.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpvfblMmU1-P9Qf0OqrJqRcWq3x1omZ8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335923294861:android:233a05015c2220f32e28c4",
+        "android_client_info": {
+          "package_name": "com.insertcart.bsnlock"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpvfblMmU1-P9Qf0OqrJqRcWq3x1omZ8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335923294861:android:a0a914ac6200fe472e28c4",
+        "android_client_info": {
+          "package_name": "com.insertcart.bsnlockrunning"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpvfblMmU1-P9Qf0OqrJqRcWq3x1omZ8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
