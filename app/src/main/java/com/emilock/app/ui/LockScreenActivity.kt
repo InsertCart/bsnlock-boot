@@ -209,7 +209,9 @@ class LockScreenActivity : AppCompatActivity() {
             hideSystemUI()
         } else if (prefs.isLocked) {
             try {
-                val intent = Intent(EmiLockAccessibilityService.ACTION_DISMISS_SYSTEM_UI)
+                val intent = Intent(EmiLockAccessibilityService.ACTION_DISMISS_SYSTEM_UI).apply {
+                    setPackage(packageName)  // FIX: restrict to our own app only
+                }
                 sendBroadcast(intent)
             } catch (_: Exception) {}
         }

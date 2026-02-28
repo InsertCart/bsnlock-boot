@@ -62,17 +62,27 @@ class MonitoringService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        log("Task removed — scheduling restart via AlarmManager")
+        log("Task removed — scheduling exact restart via AlarmManager")
         val restartIntent = Intent(applicationContext, MonitoringService::class.java)
         val pending = PendingIntent.getService(
             this, 1, restartIntent,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
-        (getSystemService(Context.ALARM_SERVICE) as AlarmManager).set(
-            AlarmManager.RTC_WAKEUP,
-            System.currentTimeMillis() + 2000L,
-            pending
-        )
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // FIX: use setExactAndAllowWhileIdle so it fires even in Doze mode (Android 6+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + 2000L,
+                pending
+            )
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + 2000L,
+                pending
+            )
+        }
     }
 
     override fun onDestroy() {
