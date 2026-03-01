@@ -1,7 +1,6 @@
 package com.emilock.app
 
 import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -15,14 +14,15 @@ import com.emilock.app.ui.LockScreenActivity
 import com.emilock.app.ui.PermissionSetupActivity
 
 /**
- * MainActivity — entry point and routing hub.
+ * MainActivity — routing hub only. No UI.
  *
  * Decision tree on every launch:
- *  1. Launched by Provisioner ("from_provisioner") → activate our admin silently then finish
- *  2. Not Device Owner & not enrolled → show PermissionSetupActivity
- *  3. Device Owner but not enrolled → skip permissions, go to EnrollmentActivity
- *  4. Enrolled + locked → show LockScreenActivity
- *  5. Enrolled + unlocked → start MonitoringService silently and finish
+ *  1. Not enrolled, not DO, no permissions → PermissionSetupActivity
+ *     (dealer grants permissions + activates Device Admin, then goes to TestDPC)
+ *  2. Not enrolled, IS Device Owner (transfer just happened) → EnrollmentActivity
+ *     (onTransferOwnershipComplete already set permissionsGranted = true)
+ *  3. Enrolled + locked → LockScreenActivity
+ *  4. Enrolled + unlocked → start MonitoringService silently and finish
  */
 class MainActivity : AppCompatActivity() {
 
@@ -32,94 +32,72 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        // ─── FIX BUG #3: No setContentView here ──────────────────────────────
+        // This is a routing-only activity. Loading the blank layout caused a
+        // white screen flash before routing. We route immediately in onCreate.
 
         val dpm   = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
         val prefs = PreferencesManager(this)
 
-        // ── FIX #4: Provisioner launched us just to activate our DeviceAdminReceiver ──
-        // transferOwnership() requires our admin to be ACTIVE before the call.
-        // Provisioner passes this flag, we activate ourselves via the hidden setActiveAdmin API,
-        // then finish back to Provisioner which can then transfer ownership.
-        if (intent.getBooleanExtra("from_provisioner", false)) {
-            Log.d(TAG, "Launched by Provisioner — activating DeviceAdminReceiver")
-            activateAdminForTransfer(dpm)
-            // Don't route anywhere — just finish so Provisioner's delay/poll can proceed
-            finish()
-            return
-        }
+        // ─── FIX BUG #3: Removed dead from_provisioner block ─────────────────
+        // TestDPC never launches EmiLock with from_provisioner=true.
+        // Device Admin activation is done by the dealer in PermissionSetupActivity
+        // via the standard ACTION_ADD_DEVICE_ADMIN dialog. No reflection needed.
 
-        // Launched normally after ownership transfer
+        // If we are Device Owner, apply restrictions immediately on every launch.
+        // This is a no-op if already applied; safe to call repeatedly.
         if (dpm.isDeviceOwnerApp(packageName)) {
-            Log.d(TAG, "Is Device Owner — applying restrictions")
+            Log.d(TAG, "Is Device Owner — ensuring restrictions are applied")
             DeviceLockManager(this).applyDeviceOwnerRestrictions()
         } else {
-            Log.w(TAG, "NOT Device Owner. Device must be provisioned.")
+            Log.d(TAG, "Not Device Owner yet — waiting for TestDPC transfer")
         }
 
-        routeToEnrollmentOrLock(dpm, prefs)
+        routeToCorrectScreen(dpm, prefs)
     }
 
-    /**
-     * FIX #3: Activate our DeviceAdminReceiver so Provisioner can call transferOwnership().
-     *
-     * The target admin MUST be active before transferOwnership() is called.
-     * As the target app, we can request our own admin activation using the hidden
-     * DevicePolicyManager.setActiveAdmin() API via reflection (Provisioner is DO, so
-     * the system allows this silently on enterprise provisioned devices).
-     *
-     * If reflection fails, we fall back to no-op — Provisioner's IllegalArgumentException
-     * will show "Retry" which the dealer can tap once to complete.
-     */
-    private fun activateAdminForTransfer(dpm: DevicePolicyManager) {
-        val admin = ComponentName(this, MyDeviceAdminReceiver::class.java)
-
-        // Already active — nothing to do
-        if (dpm.isAdminActive(admin)) {
-            Log.d(TAG, "Admin already active")
-            return
-        }
-
-        // Try silent activation via reflection (works on enterprise-provisioned devices)
-        try {
-            val method = dpm.javaClass.getMethod("setActiveAdmin", ComponentName::class.java, Boolean::class.java)
-            method.invoke(dpm, admin, true)
-            Log.d(TAG, "✅ DeviceAdminReceiver activated via reflection")
-        } catch (e: Exception) {
-            Log.w(TAG, "Reflection activation failed (${e.message}) — Provisioner will need retry")
-            // This is OK — Provisioner shows "Retry" and dealer taps once
-        }
-    }
-
-    private fun routeToEnrollmentOrLock(dpm: DevicePolicyManager, prefs: PreferencesManager) {
+    private fun routeToCorrectScreen(dpm: DevicePolicyManager, prefs: PreferencesManager) {
         val isDeviceOwner = dpm.isDeviceOwnerApp(packageName)
 
-        when {
+        val destination: Intent = when {
+
+            // ── Not yet enrolled ─────────────────────────────────────────────
             !prefs.isEnrolled -> {
-                val dest = when {
-                    // Device Owner: permissions were granted silently by Provisioner → skip setup
-                    isDeviceOwner || prefs.permissionsGranted ->
+                when {
+                    // Transfer just completed: we're DO and permissions were granted
+                    // silently in onTransferOwnershipComplete → go straight to enrollment
+                    isDeviceOwner || prefs.permissionsGranted -> {
+                        Log.d(TAG, "DO transfer complete → EnrollmentActivity")
                         Intent(this, EnrollmentActivity::class.java)
-                    // Manual install: need to request permissions normally
-                    else ->
+                    }
+                    // First launch: dealer needs to grant permissions + activate Device Admin
+                    // THEN go to TestDPC for transfer. PermissionSetupActivity handles this.
+                    else -> {
+                        Log.d(TAG, "Not enrolled, not DO → PermissionSetupActivity")
                         Intent(this, PermissionSetupActivity::class.java)
+                    }
                 }
-                startActivity(dest)
-                finish()
             }
 
+            // ── Enrolled + locked ────────────────────────────────────────────
             prefs.isLocked -> {
-                startActivity(Intent(this, LockScreenActivity::class.java).apply {
+                Log.d(TAG, "Enrolled + locked → LockScreenActivity")
+                Intent(this, LockScreenActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                })
-                finish()
+                }
             }
 
+            // ── Enrolled + unlocked → just ensure service is running ─────────
             else -> {
+                Log.d(TAG, "Enrolled + unlocked → starting MonitoringService")
                 startMonitoringService()
                 finish()
+                return
             }
         }
+
+        startActivity(destination)
+        finish()
     }
 
     private fun startMonitoringService() {

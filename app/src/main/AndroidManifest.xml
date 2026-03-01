@@ -2,25 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.emilock.app">
+
     <!-- ═══════════════════════════════════════════════════════════ -->
     <!-- PERMISSIONS -->
     <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- Core -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- Location -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!-- Phone / SIM -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" /> <!-- Notifications -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Foreground Services -->
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" /> <!-- Battery & Wakelock -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Overlay / System UI -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" /> <!-- Settings (for Device Owner capabilities) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
     <uses-permission
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
@@ -39,14 +46,39 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EMIManager"
         tools:targetApi="31">
+
+        <!-- ─── ACTIVITIES ─────────────────────────────────────── -->
+
+        <!-- Launcher / routing hub — no UI, just routes to correct screen -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Step 1: Dealer grants permissions + activates Device Admin -->
         <activity
             android:name=".ui.PermissionSetupActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+
+        <!-- Step 2: Dealer enrolls device (reached after TestDPC transfer) -->
         <activity
             android:name=".ui.EnrollmentActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+
+        <!--
+            Lock screen overlay.
+            FIX BUG #6: Added android:turnScreenOn="true"
+            showWhenLocked alone won't turn the screen on if the phone is in Doze/off.
+            Both attributes are needed. The code also calls setTurnScreenOn(true)
+            programmatically, but the manifest attribute ensures it works on all OEMs.
+        -->
         <activity
             android:name=".ui.LockScreenActivity"
             android:excludeFromRecents="true"
@@ -54,34 +86,38 @@
             android:launchMode="singleInstance"
             android:screenOrientation="portrait"
             android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.EMIManager.LockScreen" /> <!-- ─── ACTIVITIES ───────────────────────────────────────── -->
-        <!-- Main / Launcher (shows enrollment or status) -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:theme="@style/Theme.EMIManager.LockScreen" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity> <!-- ─── RECEIVERS ─────────────────────────────────────────── -->
-        <!-- Device Owner / Admin Receiver -->
+        <!-- ─── RECEIVERS ──────────────────────────────────────── -->
+
+        <!--
+            Device Admin / Device Owner receiver.
+            FIX BUG #4: Added DEVICE_OWNER_CHANGED action.
+            This broadcast fires when ownership transfers between apps.
+            Without it, onTransferOwnershipComplete() may not fire on
+            Samsung / Xiaomi / OPPO devices.
+        -->
+        <!-- FIX — add directBootAware: -->
         <receiver
             android:name=".MyDeviceAdminReceiver"
             android:exported="true"
+            android:directBootAware="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/device_admin" />
-
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
+                <!-- FIX: This is the broadcast fired when TestDPC transfers ownership to EmiLock -->
+                <action android:name="android.app.action.DEVICE_OWNER_CHANGED" />
             </intent-filter>
-        </receiver> <!-- Boot Receiver -->
+        </receiver>
+
+        <!-- Boot receiver — restores lock screen and monitoring service after reboot -->
         <receiver
             android:name=".receivers.BootReceiver"
             android:enabled="true"
@@ -91,20 +127,27 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
-        </receiver> <!-- ─── SERVICES ──────────────────────────────────────────── -->
-        <!-- Background Monitoring Service (location + heartbeat + status check) -->
+        </receiver>
+
+        <!-- ─── SERVICES ───────────────────────────────────────── -->
+
+        <!-- Background monitoring: location polling + heartbeat + status check -->
         <service
             android:name=".service.MonitoringService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="location" /> <!-- Firebase Cloud Messaging Service -->
+            android:foregroundServiceType="location" />
+
+        <!-- Firebase Cloud Messaging -->
         <service
             android:name=".service.EmiLockMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service> <!-- Accessibility Service (anti-tamper) -->
+        </service>
+
+        <!-- Anti-tamper accessibility service -->
         <service
             android:name=".service.EmiLockAccessibilityService"
             android:exported="true"
@@ -112,11 +155,11 @@
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
-
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
     </application>
 
 </manifest>

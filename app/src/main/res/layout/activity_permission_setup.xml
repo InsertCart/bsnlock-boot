@@ -1,47 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Setup Required"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Grant these permissions to activate EMI protection:"
-        android:textSize="14sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="24dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Setup Required"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-    <TextView
-        android:id="@+id/tvPermissionStatus"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:textSize="14sp"
-        android:fontFamily="monospace"
-        android:textColor="#333333" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grant these permissions, then transfer ownership from TestDPC."
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="24dp" />
 
-    <Button
-        android:id="@+id/btnGrantPermissions"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="GRANT ALL PERMISSIONS"
-        android:layout_marginBottom="12dp" />
+        <!-- Permission status display -->
+        <TextView
+            android:id="@+id/tvPermissionStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
+            android:textColor="#333333"
+            android:layout_marginBottom="24dp" />
 
-    <Button
-        android:id="@+id/btnContinue"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="CONTINUE TO ENROLLMENT"
-        android:enabled="false" />
+        <!-- Grant button -->
+        <Button
+            android:id="@+id/btnGrantPermissions"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="GRANT ALL PERMISSIONS"
+            android:layout_marginBottom="12dp" />
 
-</LinearLayout>
+        <!--
+            FIX BUG #1: This is now "Done — Go to TestDPC", not "Continue to Enrollment".
+            After tapping, dealer opens TestDPC and transfers ownership.
+            EmiLock launches automatically into EnrollmentActivity after transfer.
+        -->
+        <Button
+            android:id="@+id/btnContinue"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Done — Go to TestDPC"
+            android:enabled="false"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Shown after all permissions granted — explains next steps to dealer -->
+        <TextView
+            android:id="@+id/tvTransferInstructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Grant all permissions above, then tap the button."
+            android:textSize="14sp"
+            android:textColor="#444444"
+            android:background="#F0F8FF"
+            android:padding="16dp"
+            android:lineSpacingMultiplier="1.4" />
+
+    </LinearLayout>
+</ScrollView>
