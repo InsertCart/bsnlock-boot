@@ -13,9 +13,6 @@ import android.util.Log
  * allowing the transfer. Without this, it throws:
  *   android.os.RemoteException: checkArgument failed at transferOwnership:17206
  *
- * TestDPC has com.afwsamples.testdpc/.DeviceAdminService — this is why
- * TestDPC works as a transfer source. EmiLock needs the same on the target side.
- *
  * This service runs automatically once EmiLock's Device Admin is activated.
  * No logic needed — its mere existence and binding satisfies Samsung Knox.
  */
@@ -23,11 +20,11 @@ class EmiLockAdminService : DeviceAdminService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d("EmiLock.AdminService", "DeviceAdminService bound — transfer target ready")
+        Log.d("EmiLock.AdminService", "DeviceAdminService created — transfer target ready")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("EmiLock.AdminService", "DeviceAdminService unbound")
+        Log.d("EmiLock.AdminService", "DeviceAdminService destroyed")
     }
 }

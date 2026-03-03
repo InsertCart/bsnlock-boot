@@ -1,4 +1,4 @@
-<device-admin>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-policies>
         <disable-keyguard-features/>
         <force-lock/>
@@ -10,4 +10,6 @@
         <encrypted-storage/>
         <disable-camera/>
     </uses-policies>
+    <!-- REQUIRED for transferOwnership() to work -->
+    <support-transfer-ownership />
 </device-admin>
