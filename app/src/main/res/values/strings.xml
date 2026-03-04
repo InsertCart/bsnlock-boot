@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">BSNLock Boot</string>
-    <string name="phone_locked_message">Your phone is locked. Clear your balance to unlock the fun!</string>
-    <string name="phone_locked_message_hindi">अरे! आपका फोन लॉक हो गया है-भुगतान करें और इसे अनलॉक करें!</string>
-    <string name="accessibility_service_description">EmiLock uses Accessibility to protect this device from unauthorized tampering with app settings, factory reset, or uninstallation while the device is under EMI protection.</string>
+    <string name="phone_locked_message">Your phone is locked. Contact retailer to unlock the fun!</string>
+    <string name="phone_locked_message_hindi">अरे! आपका फोन लॉक हो गया है! रिटेलर से संपर्क करें और इसे अनलॉक करें!</string>
+    <string name="pay_button">Pay</string>
+    <string name="accessibility_service_description">BSNLock uses Accessibility to protect this device from unauthorized tampering with app settings, factory reset, or uninstallation while the device is under EMI protection.</string>
 </resources>

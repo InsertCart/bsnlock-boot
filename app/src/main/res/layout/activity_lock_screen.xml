@@ -63,8 +63,8 @@
 
             <!-- Main Lock Icon with Pulsing Effect -->
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
                 app:cardElevation="12dp"
                 app:cardCornerRadius="60dp"
                 app:cardBackgroundColor="@android:color/white"
@@ -108,8 +108,8 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/phone_locked_title"
-                        android:textSize="24sp"
+                        android:text="Please Contact Retailer"
+                        android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"
                         android:gravity="center"
@@ -218,7 +218,7 @@
                                 android:alpha="0.7" />
 
                             <TextView
-                                android:id="@+id/tv_imei"
+                                android:id="@+id/tvImei"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="357502440461683"
@@ -229,14 +229,14 @@
                                 android:layout_marginTop="2dp" />
                         </LinearLayout>
 
-                        <ImageView
-                            android:id="@+id/btn_copy_imei"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_copy"
-                            android:padding="6dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            app:tint="@color/icon_color" />
+<!--                        <ImageView-->
+<!--                            android:id="@+id/btn_copy_imei"-->
+<!--                            android:layout_width="32dp"-->
+<!--                            android:layout_height="32dp"-->
+<!--                            android:src="@drawable/ic_copy"-->
+<!--                            android:padding="6dp"-->
+<!--                            android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                            app:tint="@color/icon_color" />-->
                     </LinearLayout>
 
                     <!-- Dealer Name Row -->
@@ -315,7 +315,7 @@
                                 android:alpha="0.7" />
 
                             <TextView
-                                android:id="@+id/tvRetailerPhone"
+                                android:id="@+id/tvRetailerName"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Sandeep"
@@ -358,7 +358,7 @@
                                 android:alpha="0.7" />
 
                             <TextView
-                                android:id="@+id/tv_retailer_phone"
+                                android:id="@+id/tvRetailerPhone"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="9034888517"

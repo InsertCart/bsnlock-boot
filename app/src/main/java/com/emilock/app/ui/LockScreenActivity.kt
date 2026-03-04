@@ -124,28 +124,28 @@ class LockScreenActivity : AppCompatActivity() {
     // ─── UI setup ────────────────────────────────────────────────────────────
 
     private fun setupUI() {
-        val tvDealer   = findViewById<TextView>(R.id.tvDealerName)
+      //  val tvDealer   = findViewById<TextView>(R.id.tvDealerName)
         val tvRetailer = findViewById<TextView>(R.id.tvRetailerName)
         val tvPhone    = findViewById<TextView>(R.id.tvRetailerPhone)
         val tvImei     = findViewById<TextView>(R.id.tvImei)
-        val tvMsg      = findViewById<TextView>(R.id.tvLockMessage)
-        val etCode     = findViewById<EditText>(R.id.etUnlockCode)
-        val btnUnlock  = findViewById<Button>(R.id.btnUnlock)
+       // val tvMsg      = findViewById<TextView>(R.id.tvLockMessage)
+       // val etCode     = findViewById<EditText>(R.id.etUnlockCode)
+     //   val btnUnlock  = findViewById<Button>(R.id.btnUnlock)
 
-        tvDealer.text   = prefs.dealerName   ?: "EmiLock"
+       // tvDealer.text   = prefs.dealerName   ?: "EmiLock"
         tvRetailer.text = prefs.retailerName ?: "Contact Dealer"
         tvPhone.text    = prefs.retailerPhone ?: ""
         tvImei.text     = prefs.imei1        ?: ""
-        tvMsg.text      = prefs.lockMessage  ?: "Your EMI is overdue. Please contact your dealer to unlock."
+     //   tvMsg.text      = prefs.lockMessage  ?: "Your EMI is overdue. Please contact your dealer to unlock."
 
-        btnUnlock.setOnClickListener {
-            val code = etCode.text.toString().trim()
-            if (code.isEmpty()) {
-                Toast.makeText(this, "Enter unlock code", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            validateAndUnlock(code)
-        }
+//        btnUnlock.setOnClickListener {
+//            val code = etCode.text.toString().trim()
+//            if (code.isEmpty()) {
+//                Toast.makeText(this, "Enter unlock code", Toast.LENGTH_SHORT).show()
+//                return@setOnClickListener
+//            }
+//            validateAndUnlock(code)
+//        }
     }
 
     private fun validateAndUnlock(code: String) {
@@ -220,7 +220,7 @@ class LockScreenActivity : AppCompatActivity() {
     // ─── Pulse animation ─────────────────────────────────────────────────────
 
     private fun startPulseAnimation() {
-        val icon = try { findViewById<android.view.View>(R.id.ivLockIcon) } catch (_: Exception) { return }
+        val icon = try { findViewById<android.view.View>(R.id.iv_lock_icon) } catch (_: Exception) { return }
         ObjectAnimator.ofPropertyValuesHolder(
             icon,
             PropertyValuesHolder.ofFloat("scaleX", 1f, 1.15f),
